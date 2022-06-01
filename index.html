@@ -1,0 +1,111 @@
+<html>
+	<head>
+		<title>Marbles Game</title>
+    <script src="globals.js"></script>
+    <script src="drawing.js"></script>
+		<script type="text/javascript"> 
+		
+    
+      function changeName(id)
+      {
+        players[id].name = getbyid("p" + id + "name").value;
+        didload();
+        getbyid("p" + id + "name").focus();
+      }
+          
+      function changeColor(id, col)
+      {
+        players[id].c[col] = Math.round(getbyid("p" + id + "c" + col).value);
+        didload();
+        getbyid("p" + id + "c" + col).focus();
+      }
+      
+      function getbyid(id)
+      {
+        return document.getElementById(id);
+      }
+    
+			function didload()
+			{					
+				canvas = getbyid("theCanvas");
+        height = getbyid("boardSize").value * 2;
+        width = height;
+        canvas.height = height;
+        canvas.width = width;
+        numPlayers = getbyid("numPlayers").value;
+        
+        players.splice(numPlayers, players.length - numPlayers);
+        for(var i=players.length; i<numPlayers; i++) players.push(new Player("Player Name", Math.round(Math.random()*256), Math.round(Math.random()*256), Math.round(Math.random()*256)));
+         
+        getbyid("playerSetup").innerHTML = "";
+        for(var i=0; i<players.length; i++)
+        {
+          getbyid("playerSetup").innerHTML += "<input maxlength=\"21\" size=\"21\" id=\"p" + i + "name\" onchange=\"changeName(" + i + ");\" value=\"" + players[i].name + "\"></input>";
+        }
+        getbyid("playerSetup").innerHTML += "<br>";
+        for(var i=0; i<players.length; i++)
+        {
+          for(var j=0; j<3; j++)
+          getbyid("playerSetup").innerHTML += "<input maxlength=\"3\" size=\"3\" id=\"p" + i + "c" + j + "\" value=\""+players[i].c[j]+"\" onchange=\"changeColor(" + i + ", " + j + ");\"></input>";
+        }
+        
+        
+        
+        offset1 = getbyid("offset1").value;
+        offset2 = getbyid("offset2").value;
+        offset3 = getbyid("offset3").value;
+        
+        outInRatio = parseFloat(getbyid("outInRatio").value);
+        marbleSize = getbyid("marbleSize").value;
+        numMarbles = getbyid("numMarbles").value;
+
+        innerPits = getbyid("numInPits").value;
+        outerPits = getbyid("numOutPits").value;
+        drawLines = getbyid("drawLines").checked;
+        showHelp = getbyid("showHelp").checked;
+        
+        
+				context = canvas.getContext("2d");
+				
+				redraw();
+			}
+      
+      function openImage()
+      {
+        var win=window.open(canvas.toDataURL(), '_blank');
+        win.focus();
+      }
+		</script>
+	</head>
+	<body onLoad="didload()">
+    <table border="0">
+      <tr>
+      <td>
+  
+        # Players<br><input id="numPlayers" value="4" size="2" onchange="didload();"></input><br><br>
+        # Marbles<br><input id="numMarbles" value="5" size="2" onchange="didload();"></input><br><br>
+        Marble Size<br><input id="marbleSize" value="10" size="2" onchange="didload();"></input><br><br>
+        Board Size<br><input id="boardSize" value="450" size="3" onchange="didload();"></input><br><br>
+        # Inner<br><input id="numInPits" value="6" size="2" onchange="didload();"></input><br><br>
+        # Outer<br><input id="numOutPits" value="7" size="2" onchange="didload();"></input><br><br>
+        Offset 1<br><input id="offset1" value=".95" size="3" onchange="didload();"></input><br><br>
+        Offset 2<br><input id="offset2" value=".65" size="3" onchange="didload();"></input><br><br>
+        Offset 3<br><input id="offset3" value=".5" size="3" onchange="didload();"></input><br><br>
+        Out/In<br><input id="outInRatio" value="1" size="3" onchange="didload();"></input><br><br>
+        Draw Lines<br><input id="drawLines" type="checkbox" checked="true" onchange="didload();"></input><br><br>
+        Show Help<br><input id="showHelp" type="checkbox" checked="true" onchange="didload();"></input><br><br>
+        <input onclick="openImage();" id="saveImage" type="button" value="Save Image"></input><br>
+        <input onclick="save();" id="StartGame" type="button" value="Start Game"></input><br>
+      </td>
+      <td><canvas id="theCanvas">You need to use Firefox or Google Chrome to Play Marbles"</canvas></td>
+    </tr>
+    <tr>
+    <td colspan="2">
+      <div id="playerSetup"></div>
+    </td>
+    </tr>
+  </table><br>
+    Created by <a href="http://www.cwynn.com">Charlie Wynn</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="game/faq.html">Help/FAQ</a>
+  
+	</body>
+</html>
