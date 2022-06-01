@@ -1,0 +1,411 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<!--above line makes game playable in IE 9-->
+<html>
+	<head>
+		<title>Marbles Game</title>
+    <script src="globals.js"></script>
+    <script src="drawing.js"></script>
+    <script src="objects.js"></script>
+    <script src="vector.js"></script>
+    <script src="gamemechanics.js"></script>
+    <style type="text/css">
+		html, body {
+		  width:  100%;
+		  height: 100%;
+		  margin: 0px;
+		}
+		</style>
+		<script type="text/javascript"> 
+    var gid = gup('gid');
+    if(gid != "" && gid != undefined)
+    {
+      refresh();
+      setInterval(refresh, 5000);
+    }
+    else
+    {
+      var gid = prompt("Please enter a gameId room name", "ID");
+      if(gid)
+        window.location = 'http://cwynn.com/marbles/nplayers/test/game/board.html?gid=' + gid;
+      else
+        window.location = 'http://cwynn.com/marbles/nplayers/test/game/board.html?gid=11235813253455';
+    }
+    
+    
+    
+    function refresh()
+    {
+      if(pauseRefresh && !firstload)
+        return;
+      firstload = false;
+      
+      var xmlhttp;
+      if (window.XMLHttpRequest)
+      {// code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp=new XMLHttpRequest();
+      }
+      else
+      {// code for IE6, IE5
+        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+      }
+      xmlhttp.onreadystatechange=function()
+      {
+        if (xmlhttp.readyState==4 && xmlhttp.status==200)
+        {
+          var board = xmlhttp.responseText;
+          
+          if(board.length > 10)
+            loadBoardByStr(board);
+        }
+      }
+      xmlhttp.open("POST", "loadfile.php", true);
+      xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      xmlhttp.send("file=" + gid);  
+          
+          
+    }
+    
+    function save()
+    {
+      var xmlhttp;
+      if (window.XMLHttpRequest)
+      {// code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp=new XMLHttpRequest();
+      }
+      else
+      {// code for IE6, IE5
+        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+      }
+      xmlhttp.onreadystatechange=function()
+      {
+        if (xmlhttp.readyState==4 && xmlhttp.status==200)
+        {
+          pauseRefresh = false;
+          redraw();
+        }
+      }
+      xmlhttp.open("POST", "writetofile.php", true);
+      xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      xmlhttp.send("file=" + gid + "&text=" + createBoardStr());
+    }
+
+      var lock = 0;
+			var iterator = 0;
+			function progress(fn) {
+				if (iterator > 0) {
+          var d1 = Math.floor(Math.random()*6 + 1 );
+          var d2 = Math.floor(Math.random()*6 + 1 );
+          die1 = d1;
+          die2 = d2;
+					iterator = iterator - 1;
+          redraw();
+					setTimeout(function(){progress(fn);}, 75 + 20*(8-iterator));
+				}
+        else
+          fn();
+			};
+			function roll(fn){
+				if(lock == 0)
+				{
+					lock = 1;
+					iterator = Math.floor(Math.random()*3 + 5);
+					progress(fn);
+					lock = 0;
+				}
+			};
+    
+    function saveroll()
+    {
+      
+      var d1 = Math.floor(Math.random()*6 + 1 );
+      var d2 = Math.floor(Math.random()*6 + 1 );
+      var xmlhttp;
+      if (window.XMLHttpRequest)
+      {// code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp=new XMLHttpRequest();
+      }
+      else
+      {// code for IE6, IE5
+        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+      }
+      xmlhttp.onreadystatechange=function()
+      {
+        if (xmlhttp.readyState==4 && xmlhttp.status==200)
+        {
+          pauseRefresh = true;
+          die1 = d1;
+          die2 = d2;
+          redraw();
+        }
+      }
+      xmlhttp.open("POST", "writetofile.php", true);
+      xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      xmlhttp.send("file=" + gid + "&text=" + createBoardStr() + ";" + d1 + "-" + d2);
+    }
+    
+    
+      function gup( name ){
+        name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");  
+        var regexS = "[\\?&]"+name+"=([^&#]*)";  
+        var regex = new RegExp( regexS );  
+        var results = regex.exec( window.location.href ); 
+         if( results == null )    return "";  
+        else    return results[1];}
+    
+		  var boardstr = "4-5-5-450-6-7-.95-.65-.5-1-1;charlie-rgba(255,255,255,1):jordan-rgba(0,255,255,1):michael-rgba(255,0,255,1):al-rgba(255,255,0,1);(843.75,450)-(810,450)-(742.5,450)-(877.5,450)-(776.25,450)-(450,843.75)-(450,776.25)-(450,877.5)-(450,810)-(450,742.5)-(157.5,450.00000000000006)-(56.25,450.00000000000006)-(123.75,450.00000000000006)-(22.5,450.00000000000006)-(90,450.00000000000006)-(449.99999999999994,157.5)-(449.99999999999994,90)-(449.99999999999994,22.5)-(449.99999999999994,123.75)-(449.99999999999994,56.25)";
+      
+      function createBoardStr()
+      {
+        var h = "-";
+        var str = "";
+        str += numPlayers + h;
+        str += numMarbles + h;
+        str += pitSize + h;
+        str += width/2 + h;
+        str += innerPits + h;
+        str += outerPits + h;
+        str += offset1 + h;
+        str += offset2 + h;
+        str += offset3 + h;
+        str += outInRatio + h;
+        str += drawLines ? 1 : 0;
+        str += ";";
+        
+        for(var i=0; i<numPlayers; i++)
+        {
+          str += players[i].name + h + players[i].color;
+          if(i != numPlayers-1)
+            str += ":";
+        }
+        str += ";";
+        
+        for(m in marbles)
+        {
+          str += "(" + marbles[m].pos.x + "," + marbles[m].pos.y + ")"
+          if(m != marbles.length - 1)
+            str += "-";
+        }
+        
+        return str;
+      }
+      
+      function loadBoardByStr(str)
+      {
+        var boarddata = str.split(";");
+        var boardsetup = boarddata[0].split("-");
+        numPlayers = boardsetup[0];
+        numMarbles = boardsetup[1];
+        pitSize = boardsetup[2];
+        marblesSize = pitSize * 2;
+        width = height = boardsetup[3] * 2;
+        innerPits = boardsetup[4];
+        outerPits = boardsetup[5];
+        offset1 = boardsetup[6];
+        offset2 = boardsetup[7];
+        offset3 = boardsetup[8];
+        outInRatio = boardsetup[9];
+        drawLines = boardsetup[10] == 1;
+        
+        parseBoard();
+        
+        //parse player stuff
+        var playersetup = boarddata[1].split(":");
+        players = [];
+        for(var i=0; i<numPlayers; ++i)
+        {
+          players.push(new Player(playersetup[i].split("-")[0], playersetup[i].split("-")[1]));
+        }
+        
+        //parse marbles
+        var marbledata = boarddata[2].split("-");
+        for(var i=0; i<numPlayers; i++)
+        {
+          for(var j=0; j<numMarbles; j++)
+          {
+            var pos = marbledata[i*numMarbles + j];
+            pos = pos.replace("(", "").replace(")","");
+            marbles.push(new Marble(new Vector(pos.split(",")[0], pos.split(",")[1]), players[i].color));
+          }
+        }
+        
+        if(boarddata[3])
+        {
+          var dice = boarddata[3].split("-");
+          if(dice[0] != die1 || dice[1] != die2)
+            roll(function() {die1 = dice[0]; die2 = dice[1]; redraw();});
+        }
+        redraw();
+      }
+      
+      function getbyid(id)
+      {
+        return document.getElementById(id);
+      }
+      
+      function mouseDown(e) {
+				var clickPoint = getCursorPosition(e);
+				
+        if(clickPoint.dist(new Vector(z/2,z/2)) < z/2)
+        {
+          save();
+          return;
+        }
+        
+        if(clickPoint.dist(new Vector(width-z/2,height-z/2)) < z/2)
+        {
+          roll(function() {saveroll()});
+          return;
+        }
+        
+        if(clickPoint.dist(new Vector(width-z/2,z/2)) < z/2)
+        {
+          pauseRefresh = !pauseRefresh;
+          redraw();
+          return;
+        }
+        
+        for(k=0;k<marbles.length;k++)
+        {
+          if(marbles[k].pos.dist(clickPoint) < marbleSize)
+          {
+            dragging = k;
+            pauseRefresh = true;
+            break;
+          }
+        }
+				redraw();
+			}	
+			
+			function mouseUp(e) 
+			{
+        if(dragging == -1)
+          return;
+				var clickPoint = getCursorPosition(e);
+				
+        var closestPitPos = new Vector(-1,-1);
+				var closestPitDist = 500;
+				for(var i=0; i<pits.length; i++)
+				{					
+					if(pits[i].pos.dist(clickPoint) < closestPitDist)
+					{
+						var marbleInPit = false;
+            for(k=0;k<marbles.length;k++)
+            {
+              if(dragging != k && pits[i].pos.dist(marbles[k].pos) < 1)
+              {
+                marbleInPit = true;
+              }
+            }
+						if(!marbleInPit)
+						{
+							closestPitDist = pits[i].pos.dist(clickPoint);
+              closestPitPos = pits[i].pos;
+						}
+						else
+						{
+							//there is a marble in the pit, 
+						}
+					}
+				}
+        
+        marbles[dragging].pos = closestPitPos;
+        dragging = -1;
+        redraw();
+			}	
+			
+			function mouseMove(e) {
+      
+        if(dragging == -1)
+          return;
+				var clickPoint = getCursorPosition(e);
+        
+				if(dragging != -1)
+        {
+          marbles[dragging].pos = clickPoint;
+        }
+				redraw();
+			}
+      
+      function getCursorPosition(e) {
+				var x, y;
+				if (e.pageX || e.pageY)
+				{
+				  x = e.pageX;
+				  y = e.pageY;
+				}
+				else {
+				  x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+				  y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+				}
+				
+				x -= document.getElementById("theCanvas").offsetLeft;
+				y -= document.getElementById("theCanvas").offsetTop;
+				return new Vector(x,y);
+			}
+    
+    function touchHandler(event)
+{
+    var touches = event.changedTouches,
+        first = touches[0],
+        type = "";
+     
+	switch(event.type)
+    {
+        case "touchstart": type = "mousedown"; break;
+        case "touchmove":  type="mousemove"; break;        
+        case "touchend":   type="mouseup"; break;
+        default: return;
+    }
+	
+    var simulatedEvent = document.createEvent("MouseEvent");
+    simulatedEvent.initMouseEvent(type, true, true, window, 1, 
+                              first.screenX, first.screenY, 
+                              first.clientX, first.clientY, false, 
+                              false, false, false, 0/*left*/, null);
+
+							  first.target.dispatchEvent(simulatedEvent);
+    event.preventDefault();
+}
+
+
+			function didload()
+			{					
+	document.documentElement.style.overflow = 'hidden';	 // firefox, chrome
+	document.body.scroll = "no";
+				canvas = getbyid("theCanvas");
+				context = canvas.getContext("2d");
+        
+				canvas.addEventListener('mousedown', mouseDown, false);
+				canvas.addEventListener('mousemove', mouseMove, false);
+				canvas.addEventListener('mouseup',   mouseUp, false);
+        document.addEventListener("touchstart", touchHandler, true);
+        document.addEventListener("touchmove", touchHandler, true);
+        document.addEventListener("touchend", touchHandler, true);
+        document.addEventListener("touchcancel", touchHandler, true);
+        
+        loadBoardByStr(boardstr);
+        canvas.height = height;
+        canvas.width = width;
+        
+        
+				var xd2sq = (width/2) * (width/2);
+        var len = Math.sqrt(xd2sq*2);
+        z = len-width/2;
+        z *= .75
+        //z = Math.sqrt(2*(width/2)*(width/2))-width/2;
+				redraw();
+			}
+      
+      function openImage()
+      {
+        var win=window.open(canvas.toDataURL(), '_blank');
+        win.focus();
+      }
+		</script>
+	</head>
+	<body onLoad="didload()">
+    <canvas id="theCanvas">You need to use Firefox or Google Chrome to Play Marbles"</canvas><br>
+    Created by <a href="http://www.cwynn.com">Charlie Wynn</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="faq.html">Help/FAQ</a>
+	</body>
+</html>

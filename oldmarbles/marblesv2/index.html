@@ -1,0 +1,70 @@
+<html>
+<head>
+    <title>Marbles Game</title>
+    <script src="../../jquery.js"></script>
+    <script src="dice.js"></script>
+    <script src="drawing.js"></script>
+    <script src="functions.js"></script>
+    <script src="globals.js"></script>
+    <script src="marbles.js"></script>
+    <script src="moves.js"></script>
+</head>
+
+<body onLoad="didload()">
+	<a href="/">cWynn Homepage</a> | <a href="/marbles/board.html">More Playable Version</a><br>
+    <table align="center" border="1">
+    <tr>
+      <td colspan="3">
+        <canvas id="theCanvas" width="295" height="295" style="background-color:lightgrey">
+            You need to use Firefox or Google Chrome to Play Marbles
+        </canvas>
+      </td>
+    </tr>
+    <tr>
+      <td><div id="whichMarble" /></td>
+      <td><div id="diceATM" /></td>
+      <td><div id="confirmMove" /></td>
+    <tr>
+      <td colspan="4">
+        <b>Click dice below to roll</b>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3" align="center">
+        <a onClick="throwdice();">
+            <img src="d.gif" id="die1">
+            <img src="d.gif" id="die2">
+        </a>
+      </td>
+    </tr>
+    </table><br>
+    <input id="boardstr" size="120" />
+	<br><br>
+Things to think about<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-There's a good chance we'd be better off starting over with the code<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-Everyone calls both the starting and ending spots a player's 'home'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-start will be the players start spots<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-home will be the players ending spots<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-outSpot is where a player get out of their start spot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-Maybe marbles should have a set start spot, and a .isAtStart var, to find start marbles easier<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-Marbles location are stored as x,y-- maybe it should just be the pitNDX of the marble<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-When you could drag the marble having it as x,y made sense<br>
+<br><br>
+Update:3/19/12 6PM<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-Need to be able to choose where to come down from the middle to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-If you use a 1 and a 4 to get out, only the 4 gets `used`<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-Need to reset the possible moves after a move is made<br>
+<br><br>
+Update:3/21/12<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-You can choose where you come down from the middle to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-When you get out and move it does use both marbles<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-Possible moves still has trouble sometimes when you move<br>
+<br><br>
+Need To Work On:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-Making a move doesn't always use the die properly<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-Landing on someone doesn't have you take your 20<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-Landing on someone doesn't send them home<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-You can't get out of the center and move in the same turn<br>
+
+</body>
+</html>

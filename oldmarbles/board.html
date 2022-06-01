@@ -1,0 +1,677 @@
+<html>
+	<head>
+		<title>Marbles Game</title>
+		<script type="text/javascript"> 
+		<!--
+		/*
+		TODO:
+			be able to store the current game as a varchar like below the board var
+			make functions to do repeated things
+				find pit index for marble
+		*/
+			//Dice region
+			var debug = "";
+			var lock = 0;
+			var die1 = -1;
+			var die2 = -1;
+			var remainingMoves = [];
+			var dieFaces = ["d1.gif","d2.gif","d3.gif","d4.gif","d5.gif","d6.gif"];
+			function progress(iterator) {
+				if (iterator > 0) {
+					var randomdice1=Math.floor(Math.random()*6);
+					document.images["die1"].src=dieFaces[randomdice1];
+					randomdice=Math.floor(Math.random()*6);
+					document.images["die2"].src=dieFaces[randomdice];
+					if(die1 == -1) whosTurn = whosTurn + 4;
+					die1 = randomdice1 + 1;
+					die2 = randomdice + 1;
+					setTimeout(function(){progress(iterator-1);}, 10 + 20*(8-iterator));
+				}
+				else
+				{
+				if(die1 != die2 || whosTurn == -1)
+					whosTurn = (whosTurn + 3) % 4;
+					lock = 0;
+					possibleMoves = [];
+					remainingMoves = [die1, die2, die1+2];
+					debug = "Move " + die1 + " and " + die2 + ", or " + (die1+die2);
+					redraw();
+				}
+			}
+			
+			function throwdice(){
+				if(lock == 0)
+				{
+					lock = 1;
+					iterator = Math.floor(Math.random()*3 + 5);
+					progress(iterator);
+				}
+			}			
+			//End dice region
+			
+			var whosTurn = 0;
+			
+			function generateBoardString()
+			{
+				var boardstr = "";
+				for(var i=0; i<marblesPits.length; i++)
+				{
+					var pitMarble = getMarbleForPitNDX(i);
+					if(pitMarble == undefined)
+						boardstr += "0";
+					else 
+					{
+						for(var j=0; j<allMarbles.length; j++)
+						{
+							if(pitMarble.marbleColor == allMarbles[j][0].marbleColor)
+								boardstr += (j+1).toString();
+						}
+					}
+				}
+				return boardstr;
+			}
+			
+			function oneMove(oldPitNDX, newPitNDX, color)
+			{
+				this.oldPitNDX = oldPitNDX;
+				this.newPitNDX = newPitNDX;
+				this.color = color;
+			}
+			
+			var possibleMoves = [];
+			
+			function drawArrow(x11, y11, x21, y21, color)
+			{
+				context.beginPath();
+				var centerX = (x21+x11)/2;
+				var centerY = (y21+y11)/2;
+				var radius = Math.sqrt((x21-x11)*(x21-x11)+(y21-y11)*(y21-y11));
+				context.arc((x21+x11)/2, (y21+y11)/2, (Math.sqrt((x21-x11)*(x21-x11)+(y21-y11)*(y21-y11)))/2, Math.atan2(y21-y11, x21-x11), Math.atan2(y21-y11, x21-x11) + Math.PI, false);
+				context.lineWidth = 2;
+				context.strokeStyle = color;
+				context.stroke();
+			}
+			
+			function getPitNDXforMarble(m)
+			{
+				for(var j=0; j<marblesPits.length; j++)
+				{
+					if(marblesPits[j].pitX == m.marbleX && marblesPits[j].pitY == m.marbleY)
+					{
+						return j;
+					}
+				}
+				return -1;
+			}
+			
+			function getMarbleForPitNDX(ndx)
+			{
+				for(var j=0; j<allMarbles.length;j++)
+				{
+					for(var i=0; i<allMarbles[j].length;i++)
+					{
+						if(getPitNDXforMarble(allMarbles[j][i]) == ndx)
+						{
+							return allMarbles[j][i];
+						}
+					}
+				}
+				return undefined;
+			}
+			
+			function outSpot(whos)
+			{
+				return 20 + 16*(3-whos);
+			}
+			
+			var marbleWidth = 7;
+			var pitWidth = 2;
+			var board = "111112222233333444440000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+			
+			//stores if a marble is being dragged  -1 for not being dragged
+			var playerDraggingNDX = [-1,-1,-1,-1];
+			
+			var redFill = "rgba(255,0,0,1)"
+			var greenFill = "rgba(34,139,34,1)"
+			var orangeFill = "rgba(255,140,0,1)"
+			var blueFill = "rgba(0,0,255,1)"
+			var blackFill = "rgba(0,0,0,1)"
+			var whiteFill = "rgba(255,255,255,1)"
+			var lightblueFill = "rgba(100,100,255,1)"
+			var greyFill = "rgba(255,255,255,.5)"
+			var lightgreyFill = "rgba(200,200,200,1)"
+			var darkgreyFill = "rgba(169,169,169,1)"
+			var brownFill = "rgba(139,69,19,1)"
+				
+			var player1sMarbles = [new marble(orangeFill), new marble(orangeFill),new marble(orangeFill), new marble(orangeFill), new marble(orangeFill)];
+			var player2sMarbles = [new marble(redFill), new marble(redFill),new marble(redFill), new marble(redFill), new marble(redFill)];
+			var player3sMarbles = [new marble(blueFill), new marble(blueFill),new marble(blueFill), new marble(blueFill), new marble(blueFill)];
+			var player4sMarbles = [new marble(greenFill), new marble(greenFill),new marble(greenFill), new marble(greenFill), new marble(greenFill)];
+			
+			var allMarbles = [player1sMarbles,player2sMarbles,player3sMarbles,player4sMarbles];
+			var marblesPits = [];
+			
+			function marble(color)
+			{
+				this.marbleColor = color;
+				this.marbleX = 0;
+				this.marbleY = 0;
+			}
+		
+			function distBetween(marbleX, marbleY, pointX, pointY)
+			{
+				return Math.sqrt(((marbleX-pointX)*(marbleX-pointX))+((marbleY-pointY)*(marbleY-pointY)));
+			}
+			
+			function marblePit(x, y, nextPit, isCorner, isMiddle)
+			{
+				this.pitX = x;
+				this.pitY = y;
+				//this.marble = -1;
+				this.nextPit = nextPit;
+				this.isCorner = isCorner;
+				this.isMiddle = isMiddle;
+			}
+			
+			function generateMarblesPits()
+			{
+				var marblePitNDX = 0;
+				
+				for(h=0;h<4; h++) //for each player
+				{
+					for(i=0;i<5;i++) //make home spots
+					{
+						//orange red blue green
+						if(h==0)marblesPits[marblePitNDX++] = new marblePit(215+10*i,215+10*i,[-1,-1,-1,-1],0,0);
+						if(h==1)marblesPits[marblePitNDX++] = new marblePit(255-10*i,40+10*i,[-1,-1,-1,-1],0,0);
+						if(h==2)marblesPits[marblePitNDX++] = new marblePit(80-10*i,80-10*i,[-1,-1,-1,-1],0,0);
+						if(h==3)marblesPits[marblePitNDX++] = new marblePit(40+10*i,255-10*i,[-1,-1,-1,-1],0,0);
+					}
+				}
+				//21
+				for(i=0;i<5;i++) //green 1st row (5)
+				{
+					marblesPits[marblePitNDX++] = new marblePit(102.5,255-12.5*i, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX],0,0);
+				}
+				//26
+				for(i=0;i<5;i++) //green 2nd row (5)
+				{
+					if(i==0) marblesPits[marblePitNDX++] = new marblePit(102.5-12.5*i,192, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 1, 0);
+					else marblesPits[marblePitNDX++] = new marblePit(102.5-12.5*i,192, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0);
+				}
+				//31
+				for(i=0;i<6;i++) //green 3rd row (6)
+				{
+					if(i<3) marblesPits[marblePitNDX++] = new marblePit(40,192.5-15*i, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0);
+					if(i==3) marblesPits[marblePitNDX++] = new marblePit(40,192.5-15*i, [marblePitNDX, marblePitNDX, 94, marblePitNDX], 0, 0); //blue goes home
+					if(i>3) marblesPits[marblePitNDX++] = new marblePit(40,192.5-15*i, [marblePitNDX, marblePitNDX, -1, marblePitNDX], 0, 0);
+				}
+				//37
+				for(i=0;i<5;i++) //blue 1st row (5)
+				{
+					marblesPits[marblePitNDX++] = new marblePit(40+12.5*i,102.5, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0);
+				}
+				//42
+				for(i=0;i<5;i++) //blue 2nd row (5)
+				{
+					if(i==0) marblesPits[marblePitNDX++] = new marblePit(102.5,102.5-12.5*i, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 1, 0);
+					else marblesPits[marblePitNDX++] = new marblePit(102.5,102.5-12.5*i, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0);
+				}
+				//47
+				for(i=0;i<6;i++) //blue 3rd row (6)
+				{
+					if(i<3) marblesPits[marblePitNDX++] = new marblePit(102.5+15*i,40, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0);
+					if(i==3) marblesPits[marblePitNDX++] = new marblePit(102.5+15*i,40, [marblePitNDX, 89, marblePitNDX, marblePitNDX], 0, 0); //red goes home
+					if(i>3) marblesPits[marblePitNDX++] = new marblePit(102.5+15*i,40, [marblePitNDX, -1, marblePitNDX, marblePitNDX], 0, 0);
+				}
+				for(i=0;i<5;i++) //red 1st row (5)
+				{
+					marblesPits[marblePitNDX++] = new marblePit(193,40+12.5*i, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0);
+				}
+				for(i=0;i<5;i++) //red 2nd row (5)
+				{
+					if(i==0) marblesPits[marblePitNDX++] = new marblePit(192.5+12.5*i,102.5, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 1, 0);
+					else marblesPits[marblePitNDX++] = new marblePit(192.5+12.5*i,102.5, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0);
+				}
+				for(i=0;i<6;i++) //red 3rd row (6) 
+				{
+					if(i<3) marblesPits[marblePitNDX++] = new marblePit(255,102.5+15*i, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0);
+					if(i==3) marblesPits[marblePitNDX++] = new marblePit(255,102.5+15*i, [84, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0); //orange goes home
+					if(i>3) marblesPits[marblePitNDX++] = new marblePit(255,102.5+15*i, [-1, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0);
+				}
+				for(i=0;i<5;i++) //orange 1st row (5)
+				{
+					marblesPits[marblePitNDX++] = new marblePit(255-12.5*i,192.5, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0);
+				}
+				for(i=0;i<5;i++) //orange 2nd row (5)
+				{
+					if(i==0) marblesPits[marblePitNDX++] = new marblePit(193.5,192.5+12.5*i, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 1, 0);
+					else marblesPits[marblePitNDX++] = new marblePit(193.5,192.5+12.5*i, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0);
+				}
+				for(i=0;i<6;i++) //orange 3rd row (6)
+				{
+					if(i<3) marblesPits[marblePitNDX++] = new marblePit(193-15*i,255, [marblePitNDX, marblePitNDX, marblePitNDX, marblePitNDX], 0, 0);
+					if(i==3) marblesPits[marblePitNDX++] = new marblePit(193-15*i,255, [marblePitNDX, marblePitNDX, marblePitNDX, 99], 0, 0); //green goes home
+					if(i==4) marblesPits[marblePitNDX++] = new marblePit(193-15*i,255, [marblePitNDX, marblePitNDX, marblePitNDX, -1], 0, 0);
+					if(i==5) marblesPits[marblePitNDX++] = new marblePit(193-15*i,255, [20, 20, 20, -1], 0, 0);
+				}
+				for(i=0;i<5;i++) //orange home
+				{
+					if(i<4) marblesPits[marblePitNDX++] = new marblePit(240-15*i,147.5, [marblePitNDX, -1, -1, -1], 0, 0);
+					else marblesPits[marblePitNDX++] = new marblePit(240-15*i,147.5, [-1, -1, -1, -1], 0, 0);
+				}
+				for(i=0;i<5;i++) //red home
+				{
+					if(i<4) marblesPits[marblePitNDX++] = new marblePit(147.5,55+15*i, [-1, marblePitNDX, -1, -1], 0, 0);
+					else marblesPits[marblePitNDX++] = new marblePit(147.5,55+15*i, [-1, -1, -1, -1], 0, 0);
+				}
+				for(i=0;i<5;i++) //blue home
+				{
+					if(i<4) marblesPits[marblePitNDX++] = new marblePit(55+15*i,147.5, [-1, -1, marblePitNDX, -1], 0, 0);
+					else marblesPits[marblePitNDX++] = new marblePit(55+15*i,147.5, [-1, -1, -1, -1], 0, 0);
+				}
+				for(i=0;i<5;i++) //green home
+				{
+					if(i<4) marblesPits[marblePitNDX++] = new marblePit(147.5,240-15*i, [-1, -1, -1, marblePitNDX], 0, 0);
+					else marblesPits[marblePitNDX++] = new marblePit(147.5,240-15*i, [-1, -1, -1, -1], 0, 0);
+				}
+				
+				marblesPits[marblePitNDX] = new marblePit(147.5,147.5, [-1, -1, -1, -1], 0, 1);
+			}
+			
+			function mouseDown(e) {
+				var clickPoint = getCursorPosition(e);
+				
+				for(var j=0; j<player1sMarbles.length; j++)
+				{
+					for(k=0;k<allMarbles.length;k++)
+					{
+						if(distBetween(allMarbles[k][j].marbleX,allMarbles[k][j].marbleY, clickPoint[0], clickPoint[1]  ) < marbleWidth)
+						{
+							playerDraggingNDX[k] = j;
+							break;
+						}
+					}
+				}
+				redraw();
+			}	
+			
+			function mouseUp(e) 
+			{
+				var clickPoint = getCursorPosition(e);
+				
+				var closestPitndx = 0;
+				var closestPitDist = 500;
+				for(var i=0; i<marblesPits.length; i++)
+				{					
+					if(distBetween(marblesPits[i].pitX,marblesPits[i].pitY,clickPoint[0],clickPoint[1]) < closestPitDist)
+					{
+						var marbleInPit = false;
+						for(var j=0; j<player1sMarbles.length; j++)
+						{
+							for(k=0;k<allMarbles.length;k++)
+							{
+								if((playerDraggingNDX[k] != j) && (allMarbles[k][j].marbleX==marblesPits[i].pitX) && (allMarbles[k][j].marbleY == marblesPits[i].pitY))
+								{
+									marbleInPit = true;
+								}
+							}
+						}
+						if(!marbleInPit)
+						{
+							closestPitDist = distBetween(marblesPits[i].pitX,marblesPits[i].pitY,clickPoint[0],clickPoint[1]);
+							closestPitndx = i;
+						}
+						else
+						{
+							//there is a marble in the pit, 
+						}
+					}
+				}
+							
+				for(i=0;i<allMarbles.length;i++)
+				{
+					if(playerDraggingNDX[i] != -1)
+					{
+						allMarbles[i][playerDraggingNDX[i]].marbleX = marblesPits[closestPitndx].pitX;
+						allMarbles[i][playerDraggingNDX[i]].marbleY = marblesPits[closestPitndx].pitY;
+					}
+					playerDraggingNDX[i] = -1;
+				}
+			}	
+			
+			function mouseMove(e) {
+				var clickPoint = getCursorPosition(e);
+				
+				for(i=0;i<playerDraggingNDX.length;i++)
+				{
+					if(playerDraggingNDX[i] != -1)
+					{
+						allMarbles[i][playerDraggingNDX[i]].marbleX = clickPoint[0];
+						allMarbles[i][playerDraggingNDX[i]].marbleY = clickPoint[1];
+					}
+				}
+				
+				redraw();
+			}
+			function previewMove(pitToMoveFromNDX, steps)
+			{
+				var player = -1;
+				for(var i=0; i<player1sMarbles.length; i++) { if(getPitNDXforMarble(player1sMarbles[i]) == pitToMoveFromNDX) player = 0; }
+				for(var i=0; i<player2sMarbles.length; i++) { if(getPitNDXforMarble(player2sMarbles[i]) == pitToMoveFromNDX) player = 1; }
+				for(var i=0; i<player3sMarbles.length; i++) { if(getPitNDXforMarble(player3sMarbles[i]) == pitToMoveFromNDX) player = 2; }
+				for(var i=0; i<player4sMarbles.length; i++) { if(getPitNDXforMarble(player4sMarbles[i]) == pitToMoveFromNDX) player = 3; }
+				if(player == -1)
+					return undefined;
+				return previewMove_h(pitToMoveFromNDX, pitToMoveFromNDX, steps, player);
+			}
+			
+			function previewMove_h(originalPitNDX, intermediatePitNDX, steps, player)
+			{
+				var intermediatePit = marblesPits[intermediatePitNDX];
+				if(intermediatePit.nextPit[player] == -1)
+					return undefined;
+				else
+				{
+					for(var i=0; i<player1sMarbles.length; i++)
+					{
+						if(intermediatePit.nextPit[player] == getPitNDXforMarble(allMarbles[player][i]))
+						{
+							//can't pass yourself
+							return undefined;
+						}
+					}
+				}
+				if(steps == 1)
+				{
+					return new oneMove(originalPitNDX, intermediatePit.nextPit[player], blackFill);
+				}
+				else
+					return previewMove_h(originalPitNDX, intermediatePit.nextPit[player], steps-1, player);
+			}
+			
+			
+			function preview20(pitToMoveFromNDX)
+			{
+				return preview20_h(pitToMoveFromNDX, pitToMoveFromNDX, 20, whosTurn)
+			}
+			function preview20_h(originalPitNDX, intermediatePitNDX, steps, player)
+			{
+				var intermediatePit = marblesPits[intermediatePitNDX];
+				if(intermediatePit.nextPit[player] == -1)
+					return new oneMove(originalPitNDX, intermediatePitNDX, blackFill);
+				else
+				{
+					for(var i=0; i<player1sMarbles.length; i++)
+					{
+						if(intermediatePit.nextPit[player] == getPitNDXforMarble(allMarbles[player][i]))
+						{
+							//can't pass yourself
+							return new oneMove(originalPitNDX, intermediatePitNDX, blackFill);
+						}
+					}
+				}
+				if(steps == 1)
+					return new oneMove(originalPitNDX, intermediatePit.nextPit[player]);
+				else
+					return preview20_h(originalPitNDX, intermediatePit.nextPit[player], steps-1, player);
+			}
+			
+			function getCursorPosition(e) {
+				var x, y;
+				if (e.pageX || e.pageY)
+				{
+				  x = e.pageX;
+				  y = e.pageY;
+				}
+				else {
+				  x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+				  y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+				}
+				
+				x -= document.getElementById("theCanvas").offsetLeft;
+				y -= document.getElementById("theCanvas").offsetTop;
+				return [x,y];
+			}
+				var canvas;
+				var context;
+   
+			function redraw()
+			{				
+				document.getElementById('boardstr').value = generateBoardString();
+				//Draw Grey Background
+				context.fillStyle = lightgreyFill;
+				context.fillRect(0,0,295,295);
+				context.fill();
+				context.fillStyle = greyFill;
+				context.fillRect(20,20,255,255);
+				context.fill();
+				
+				//Draw Marbles Pits
+				context.beginPath();
+				if(whosTurn == 0) context.fillStyle = orangeFill;
+				if(whosTurn == 1) context.fillStyle = redFill;
+				if(whosTurn == 2) context.fillStyle = blueFill;
+				if(whosTurn == 3) context.fillStyle = greenFill;
+				context.arc(117, 10,marbleWidth,0,Math.PI*2,false);
+				context.closePath();	
+				context.fill();
+				context.fillStyle = blackFill;
+				context.font = 'italic bold 15px sans-serif';
+				context.textBaseline = 'bottom';
+				context.fillText('\'s Turn!', 125, 20);
+				context.font = 'italic bold 15px sans-serif';
+				context.textBaseline = 'bottom';
+				context.fillText(debug, 5, 295);
+				for(i=0; i<marblesPits.length;i++)
+				{					
+					context.beginPath();
+					context.fillStyle = blackFill;
+					if(marblesPits[i].isCorner == 1 || marblesPits[i].isMiddle == 1) context.fillStyle = redFill;
+					else context.fillStyle = blackFill;
+					context.arc(marblesPits[i].pitX,marblesPits[i].pitY,pitWidth,0,Math.PI*2,false);
+					context.closePath();	
+					context.fill();
+				}
+				for(var j=0; j<allMarbles.length;j++)
+				{
+					for(i=0; i<allMarbles[j].length;i++)
+					{
+						context.beginPath();
+						context.fillStyle = allMarbles[j][i].marbleColor;
+						context.arc(allMarbles[j][i].marbleX,allMarbles[j][i].marbleY,marbleWidth,0,Math.PI*2,false);
+						context.closePath();	
+						context.fill();
+						
+					}
+				}
+				if(playerDraggingNDX[0] == -1 && playerDraggingNDX[1] == -1 && playerDraggingNDX[2] == -1 && playerDraggingNDX[3] == -1)
+				{
+					findPossibleMoves();
+				}
+				
+				//draw center marble on top of lines
+				var centerMarble = getMarbleForPitNDX(104);
+				if(centerMarble != undefined)
+				{
+					context.beginPath();
+					context.fillStyle = centerMarble.marbleColor;
+					context.arc(centerMarble.marbleX,centerMarble.marbleY,marbleWidth,0,Math.PI*2,false);
+					context.closePath();	
+					context.fill();
+				}
+				
+			}
+			var once = 0;
+			function findPossibleMoves()
+			{
+				var pMNDX = 0;
+				possibleMoves = [];
+				
+				if(getMarbleForPitNDX(104) != undefined)
+				{
+					var m25 = getMarbleForPitNDX(25);
+					var m41 = getMarbleForPitNDX(41);
+					var m57 = getMarbleForPitNDX(57);
+					var m73 = getMarbleForPitNDX(73);
+					if(m25 == undefined)
+						possibleMoves[pMNDX++] = new oneMove(104, 25, blackFill);
+					else if(m25.marbleColor != allMarbles[whosTurn][0].marbleColor)
+						possibleMoves[pMNDX++] = new oneMove(104, 25, blackFill);
+					if(m41 == undefined)
+						possibleMoves[pMNDX++] = new oneMove(104, 41, blackFill);
+					else if(m41.marbleColor != allMarbles[whosTurn][0].marbleColor)
+						possibleMoves[pMNDX++] = new oneMove(104, 41, blackFill);
+					if(m57 == undefined)
+						possibleMoves[pMNDX++] = new oneMove(104, 57, blackFill);
+					else if(m57.marbleColor != allMarbles[whosTurn][0].marbleColor)
+						possibleMoves[pMNDX++] = new oneMove(104, 57, blackFill);
+					if(m73 == undefined)
+						possibleMoves[pMNDX++] = new oneMove(104, 73, blackFill);
+					else if(m73.marbleColor != allMarbles[whosTurn][0].marbleColor)
+						possibleMoves[pMNDX++] = new oneMove(104, 73, blackFill);
+				}
+				
+				for(var i=0; i<player1sMarbles.length; i++)
+				{
+					var currentPit = getPitNDXforMarble(allMarbles[whosTurn][i]);
+					
+					if(currentPit == -1) alert("Lost Marble");
+					var move = previewMove(currentPit, die1);
+					if(move != undefined)
+						possibleMoves[pMNDX++] = move;
+					var move = previewMove(currentPit, die2);
+					if(move != undefined)
+						possibleMoves[pMNDX++] = move;
+					var move = previewMove(currentPit, die1 + die2);
+					if(move != undefined)
+						possibleMoves[pMNDX++] = move;
+				}
+				
+				for(i=0; i<possibleMoves.length; i++)
+				{
+					if(marblesPits[possibleMoves[i].newPitNDX].isCorner == 1)
+					{
+						var centerMarble = getMarbleForPitNDX(104);
+						if(centerMarble == undefined)//no marble in the center
+						{
+							possibleMoves[pMNDX++] = new oneMove(possibleMoves[i].oldPitNDX, 104, blackFill);
+						}
+						else if(centerMarble.marbleColor != allMarbles[whosTurn][0].marbleColor) //marble of different color in center
+						{
+							possibleMoves[pMNDX++] = new oneMove(possibleMoves[i].oldPitNDX, 104, blackFill);
+						}
+					}
+				}
+				
+				var marbleAtStart = -1;
+				var marbleAtOutSpot = 0;
+				//check home spots
+				for(var i=0; i<5; i++)
+				{
+					for(var j=0; j<allMarbles[0].length; ++j)
+					{
+						if(outSpot(whosTurn) == getPitNDXforMarble(allMarbles[whosTurn][j]))
+						{
+							marbleAtOutSpot = 1;
+						}
+						if(5*whosTurn + i == getPitNDXforMarble(allMarbles[whosTurn][j]))
+						{
+							marbleAtStart = j;
+						}
+					}
+				}
+				if(marbleAtStart != -1 && marbleAtOutSpot == 0 && (die1 == 1 || die2 == 1 || die1 == 6 || die2 == 6))
+				{
+					possibleMoves[pMNDX++] = new oneMove(5*whosTurn + marbleAtStart,outSpot(whosTurn),greenFill);
+				}
+				
+				//see if you landed on another marble and if you get to go 20 more
+				for(var y=0; y<4; y++) //you can't land on other marbles more that 4 times
+				{
+					var oldPMlength = possibleMoves.length; //since we'll be adding to possible moves, don't iterate over its length
+					for(i=0; i<oldPMlength; i++)
+					{
+						var attackedMarble = getMarbleForPitNDX(possibleMoves[i].newPitNDX);
+						if(attackedMarble != undefined)
+						{
+							if(attackedMarble.marbleColor != allMarbles[whosTurn][0].marbleColor)
+							{
+								m = preview20(possibleMoves[i].newPitNDX);
+								if(m != undefined)
+								{
+									m.color = redFill;
+									possibleMoves[pMNDX++] = m;
+								}
+							}
+						}
+					}
+				}
+				for(i=0; i<possibleMoves.length; i++)
+				{
+					drawArrow(marblesPits[possibleMoves[i].oldPitNDX].pitX, marblesPits[possibleMoves[i].oldPitNDX].pitY, marblesPits[possibleMoves[i].newPitNDX].pitX, marblesPits[possibleMoves[i].newPitNDX].pitY, possibleMoves[i].color);
+				}
+			}
+            function drawCircle(x,y,radius,color)
+            {
+				context.beginPath();
+				context.fillStyle = color;
+				context.arc(x, y, radius, 0, Math.PI*2,false);
+				context.closePath();	
+				context.fill();
+            }
+			function keypressed(e)
+			{
+				//if(e.keyCode == 77)//m
+				if(e.keyCode == 32) //spacebar
+					throwdice(1);
+			}
+			function didload()
+			{					
+				canvas = document.getElementById("theCanvas");
+				context = canvas.getContext("2d");
+				
+				canvas.addEventListener('mousedown', mouseDown, false);
+				canvas.addEventListener('mousemove', mouseMove, false);
+				canvas.addEventListener('mouseup',   mouseUp, false);
+				document.onkeydown = keypressed;
+				
+				generateMarblesPits();
+				for(i=0;i<allMarbles.length;i++)
+				{
+					playerMarbleNDX = 0;
+					for(j=0; j<marblesPits.length;j++)
+					{
+						if(board[j] == (i+1)+"")
+						{
+							//marblesPits[i].marble = player1sMarbles[player1ndx];
+							allMarbles[i][playerMarbleNDX].marbleX = marblesPits[j].pitX;
+							allMarbles[i][playerMarbleNDX].marbleY = marblesPits[j].pitY;
+							++playerMarbleNDX;
+						}
+					}
+				}
+				redraw();
+						
+			}
+		-->
+		
+		</script>
+	</head>
+	<body onLoad="didload()">
+		<a href="http://cwynn.com">cWynn Homepage</a><br><br/><br/><br/>
+				<div align=center valign=top>
+					<b>Control + will usually make the board bigger<br/>F11 will go to full screen</b><br/><br/>
+					<canvas id="theCanvas" width="295" height="295" style="background-color:lightgrey" >You need to use Firefox or Google Chrome to Play Marbles"</canvas>
+					<br/><br/><b>Click dice below to roll</b><br/>
+					<a onClick="throwdice();">
+						<img src="d.gif" name="die1">
+						<img src="d.gif" name="die2">
+					</a>
+				</div>
+				<br><br><input id="boardstr" size="120" />
+		
+<br><br>
+I'm working to redo the marbles board, check out the newer version <a href="/marbles/marblesv2">here</a>
+	</body>
+</html>
